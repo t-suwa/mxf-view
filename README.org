@@ -19,8 +19,11 @@ Features:
 
 * Screenshot
 
-  [[file:images/mxf-view.png][View MXF structure]]
-  [[file:images/imenu.png][Move around with imenu]]
+  - View MXF structure
+  [[images/mxf-view.png]]
+
+  - Move around with imenu
+  [[images/imenu.png]]
 
 * Install
 
@@ -30,48 +33,42 @@ Features:
   (require 'mxf-view)
   #+END_SRC
 
-  This updates `auto-mode-alist' and opening `*.mxf' enables mxf-view-mode
-  automatically.
+  This updates *`auto-mode-alist'* and opening a MXF file enables
+  *mxf-view-mode* automatically.
 
   If you would like to manage mxf-view as a package, try this:
 
-  :M-x package-install-file RET mxf-view.el RET
+  : M-x package-install-file RET mxf-view.el RET
 
 * Key bindings
 
-|------+---------------------------------|
-| key  | function                        |
-|------+---------------------------------|
-| SPC  | scroll up                       |
-|------+---------------------------------|
-| DEL  | scroll down                     |
-|------+---------------------------------|
-| j,   | move to next widget             |
-| n,   |                                 |
-|------+---------------------------------|
-| k,   | move to prior widget            |
-| p,   |                                 |
-|------+---------------------------------|
-| M-n  | move to next sibling widget     |
-|------+---------------------------------|
-| M-p  | move to previous sibling widget |
-|------+---------------------------------|
-| h,   | move to parent widget           |
-| u    |                                 |
-|------+---------------------------------|
-| c,   |                                 |
-| TAB, | toggle single widget            |
-| RET  |                                 |
-|------+---------------------------------|
-| /,   | toggle widget recursively       |
-| *    |                                 |
-|------+---------------------------------|
-| e    | extract essence to file         |
-|------+---------------------------------|
-| g    | revert buffer                   |
-|------+---------------------------------|
-| z    | suspend                         |
-|------+---------------------------------|
-| q    | quit                            |
-|------+---------------------------------|
+|-----------+---------------------------------|
+| key       | function                        |
+|-----------+---------------------------------|
+| SPC       | scroll up                       |
+|-----------+---------------------------------|
+| DEL       | scroll down                     |
+|-----------+---------------------------------|
+| j,n       | move to next widget             |
+|-----------+---------------------------------|
+| k,p       | move to prior widget            |
+|-----------+---------------------------------|
+| M-n       | move to next sibling widget     |
+|-----------+---------------------------------|
+| M-p       | move to previous sibling widget |
+|-----------+---------------------------------|
+| h,u       | move to parent widget           |
+|-----------+---------------------------------|
+| c,TAB,RET | toggle single widget            |
+|-----------+---------------------------------|
+| /,*       | toggle widget recursively       |
+|-----------+---------------------------------|
+| e         | extract essence to file         |
+|-----------+---------------------------------|
+| g         | revert buffer                   |
+|-----------+---------------------------------|
+| z         | suspend                         |
+|-----------+---------------------------------|
+| q         | quit                            |
+|-----------+---------------------------------|
 
