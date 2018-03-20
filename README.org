@@ -1,0 +1,77 @@
+* What's this?
+
+An Emacs package for viewing MXF files.
+
+Features:
+
+- Provide a view of MXF physical structure
+- Create links between instance references
+- Open/collapse widget easily
+- Extract individual essence to file
+- Support for imenu and font lock
+- Revert buffer
+
+* Limitations
+
+- No metadata for local tags
+- No validation
+- No hooks
+
+* Screenshot
+
+  [[file:images/mxf-view.png][View MXF structure]]
+  [[file:images/imenu.png][Move around with imenu]]
+
+* Install
+
+  Put mxf-view.el in your load-path, then add following code to your init files.
+
+  #+BEGIN_SRC elisp
+  (require 'mxf-view)
+  #+END_SRC
+
+  This updates `auto-mode-alist' and opening `*.mxf' enables mxf-view-mode
+  automatically.
+
+  If you would like to manage mxf-view as a package, try this:
+
+  :M-x package-install-file RET mxf-view.el RET
+
+* Key bindings
+
+|------+---------------------------------|
+| key  | function                        |
+|------+---------------------------------|
+| SPC  | scroll up                       |
+|------+---------------------------------|
+| DEL  | scroll down                     |
+|------+---------------------------------|
+| j,   | move to next widget             |
+| n,   |                                 |
+|------+---------------------------------|
+| k,   | move to prior widget            |
+| p,   |                                 |
+|------+---------------------------------|
+| M-n  | move to next sibling widget     |
+|------+---------------------------------|
+| M-p  | move to previous sibling widget |
+|------+---------------------------------|
+| h,   | move to parent widget           |
+| u    |                                 |
+|------+---------------------------------|
+| c,   |                                 |
+| TAB, | toggle single widget            |
+| RET  |                                 |
+|------+---------------------------------|
+| /,   | toggle widget recursively       |
+| *    |                                 |
+|------+---------------------------------|
+| e    | extract essence to file         |
+|------+---------------------------------|
+| g    | revert buffer                   |
+|------+---------------------------------|
+| z    | suspend                         |
+|------+---------------------------------|
+| q    | quit                            |
+|------+---------------------------------|
+
