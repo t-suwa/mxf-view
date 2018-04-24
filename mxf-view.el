@@ -1,4 +1,4 @@
-;;; mxf-view.el --- Simple MXF viewer
+;;; mxf-view.el --- Simple MXF viewer -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2018 Tomotaka SUWA
 
@@ -135,6 +135,7 @@
     (define-key map (kbd "q") 'mxf-view-close)
     map))
 
+;;;###autoload
 (define-derived-mode mxf-view-mode special-mode "MXF-View"
   (use-local-map mxf-view-mode-map)
   (setq imenu-create-index-function 'mxf-view-imenu-index)
@@ -817,15 +818,17 @@ COUNT should be an integer or a symbol bound to an integer."
   (let ((b1 (mxf-view-read-u8)))
     (if (< b1 128) b1
       (let ((vec (nreverse (mxf-view-read-vec (logand b1 127))))
-            (result 0))
-        (dotimes (i (length vec) result)
-          (setq result
-                (logior result
-                        (lsh (aref vec i) (* i 8)))))))))
+            (result 0)
+            (i 0))
+        (while (< i (length vec))
+          (setq result (logior result
+                               (lsh (aref vec i) (* i 8))))
+          (incf i))
+        result))))
 
 (defun mxf-view-read-kl ()
   "Return a cons-pair of KLV key and length."
-  (condition-case err
+  (condition-case nil
       (cons (mxf-view-read-key)
             (mxf-view-read-ber))
     (error
@@ -1061,7 +1064,7 @@ COUNT should be an integer or a symbol bound to an integer."
         (run-in-limit (* 64 1024)))
     (catch 'found
       (while (< (- (point) pos) run-in-limit)
-        (condition-case err
+        (condition-case nil
             (save-excursion
               (if (string-match partition-key (mxf-view-read-key))
                   (throw 'found t)))
@@ -1379,7 +1382,6 @@ COUNT should be an integer or a symbol bound to an integer."
   (let ((buffer (get-buffer-create "MXF-View-Essence"))
         (mxf-view-file buffer-file-name)
         (data (mxf-view-getw-data widget))
-        (pos (mxf-view-getw-children-beg widget))
         (inhibit-read-only t))
     (with-current-buffer buffer
       (erase-buffer)
@@ -1444,14 +1446,13 @@ COUNT should be an integer or a symbol bound to an integer."
   (let (result)
     (save-excursion
       (pcase-dolist (`(,group ,exp ,pos) mxf-view-imenu-expression)
-        (let (found)
-          (goto-char (point-min))
-          (while (re-search-forward exp nil t)
-            (let ((name (match-string-no-properties pos))
-                  (idx (match-beginning pos)))
-              (push (list (mxf-view-getw-partition-name idx)
-                          (cons (format "(%s) %s" group name) idx))
-                    result))))))
+        (goto-char (point-min))
+        (while (re-search-forward exp nil t)
+          (let ((name (match-string-no-properties pos))
+                (idx (match-beginning pos)))
+            (push (list (mxf-view-getw-partition-name idx)
+                        (cons (format "(%s) %s" group name) idx))
+                  result)))))
     ;; stable sort
     (sort (nreverse result)
           (lambda (a b)
@@ -1548,8 +1549,7 @@ COUNT should be an integer or a symbol bound to an integer."
 
 (defun mxf-view-render-ref-button (uuid beg end)
   "Make a link button of UUID between buffer position BEG and END."
-  (let ((label (buffer-substring beg end))
-        (ref (intern (concat "mxf-view-ref-"
+  (let ((ref (intern (concat "mxf-view-ref-"
                              (mxf-view-hex uuid)))))
     (make-button beg end
                  'action 'mxf-view-goto-uuid
@@ -1558,23 +1558,22 @@ COUNT should be an integer or a symbol bound to an integer."
 
 (defun mxf-view-render-leaf (node children depth)
   "Render a leaf with NODE, CHILDREN and DEPTH."
-  (let ((pos-list (point)))
-    (insert (mxf-view-render-indent depth)
-            mxf-view-leaf-icon
-            (mxf-view-leaf-str
-             (prin1-to-string (car node)))
-            " = "
-            (mxf-view-render-value children)
-            "\n")
-    (pcase node
-      ((or `(,_ :type ref)
-           `(:instance-uid :type uuid))
-       (save-excursion
-         (forward-line -1)
-         (if (re-search-forward ":[^ ]+" nil t)
-             (mxf-view-render-ref-button children
-                                         (match-beginning 0)
-                                         (match-end 0))))))))
+  (insert (mxf-view-render-indent depth)
+          mxf-view-leaf-icon
+          (mxf-view-leaf-str
+           (prin1-to-string (car node)))
+          " = "
+          (mxf-view-render-value children)
+          "\n")
+  (pcase node
+    ((or `(,_ :type ref)
+         `(:instance-uid :type uuid))
+     (save-excursion
+       (forward-line -1)
+       (if (re-search-forward ":[^ ]+" nil t)
+           (mxf-view-render-ref-button children
+                                       (match-beginning 0)
+                                       (match-end 0)))))))
 
 (defun mxf-view-render-node (node depth)
   "Render a node with NODE and DEPTH."
