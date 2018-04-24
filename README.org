@@ -1,12 +1,13 @@
 * What's this?
 
-An Emacs package for viewing MXF files.
+An Emacs package for viewing [[https://en.wikipedia.org/wiki/Material_Exchange_Format][MXF]] files.
 
 Features:
 
 - Provide a view of MXF physical structure
 - Create links between instance references
 - Open/collapse widget easily
+- Hexlify indivisual essence 
 - Extract individual essence to file
 - Support for imenu and font lock
 - Revert buffer
@@ -29,11 +30,11 @@ Features:
 
   Put mxf-view.el in your load-path, then add following code to your init files.
 
-  #+BEGIN_SRC elisp
+  #+BEGIN_SRC emacs-lisp
   (require 'mxf-view)
   #+END_SRC
 
-  This updates *`auto-mode-alist'* and opening a MXF file enables
+  This updates `auto-mode-alist' and opening a MXF file enables
   *mxf-view-mode* automatically.
 
   If you would like to manage mxf-view as a package, try this:
@@ -63,6 +64,8 @@ Features:
 |-----------+---------------------------------|
 | /,*       | toggle widget recursively       |
 |-----------+---------------------------------|
+| x         | hexlify essence                 |
+|-----------+---------------------------------|
 | e         | extract essence to file         |
 |-----------+---------------------------------|
 | g         | revert buffer                   |
@@ -71,4 +74,3 @@ Features:
 |-----------+---------------------------------|
 | q         | quit                            |
 |-----------+---------------------------------|
-
