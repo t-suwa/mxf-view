@@ -3,9 +3,11 @@
 ;; Copyright (C) 2018 Tomotaka SUWA
 
 ;; Author: Tomotaka SUWA <tomotaka.suwa@gmail.com>
-;; Version: 0.1
-;; Keywords: mxf
 ;; Package: mxf-view
+;; Package-Requires: ((emacs "25"))
+;; Version: 0.2
+;; Keywords: data multimedia
+;; URL: https://github.com/t-suwa/mxf-view
 
 ;; This file is not part of GNU Emacs.
 
@@ -35,6 +37,7 @@
 
 (require 'seq)
 (require 'subr-x)
+(require 'hexl)
 
 ;; ============================================================
 ;; custom vars
@@ -94,18 +97,18 @@
 ;; font lock support
 ;; ============================================================
 
-(defmacro define-mxf-view-font-lock (face)
+(defmacro mxf-view-define-font-lock (face)
   "Define wrapper to set font-lock-face to FACE."
   (let ((name (intern (format "%s-str" face))))
     `(defun ,name (str)
        (propertize str 'font-lock-face ',face))))
 
-(define-mxf-view-font-lock mxf-view-node)
-(define-mxf-view-font-lock mxf-view-leaf)
-(define-mxf-view-font-lock mxf-view-property)
-(define-mxf-view-font-lock mxf-view-string)
-(define-mxf-view-font-lock mxf-view-value)
-(define-mxf-view-font-lock mxf-view-warning)
+(mxf-view-define-font-lock mxf-view-node)
+(mxf-view-define-font-lock mxf-view-leaf)
+(mxf-view-define-font-lock mxf-view-property)
+(mxf-view-define-font-lock mxf-view-string)
+(mxf-view-define-font-lock mxf-view-value)
+(mxf-view-define-font-lock mxf-view-warning)
 
 ;; ============================================================
 ;; MXF-View mode
@@ -127,6 +130,7 @@
     (define-key map (kbd "/") 'mxf-view-toggle-all-widget)
     (define-key map (kbd "*") 'mxf-view-toggle-all-widget)
     (define-key map (kbd "e") 'mxf-view-extract-essence)
+    (define-key map (kbd "x") 'mxf-view-hexlify-essence)
     (define-key map (kbd "z") 'mxf-view-suspend)
     (define-key map (kbd "q") 'mxf-view-close)
     map))
@@ -143,19 +147,19 @@
 ;; buffer-local vars
 ;; ============================================================
 
-(defvar mxf-view/pindex-length 0
+(defvar mxf-view--pindex-length 0
   "We can determine partition index length only at decode timing.")
 
-(defvar mxf-view/index-slice-count 0
+(defvar mxf-view--index-slice-count 0
   "We can determine slice count only at decode timing.")
 
-(defvar mxf-view/index-pos-table-count 0
+(defvar mxf-view--index-pos-table-count 0
   "We can determine pos table count only at decode timing.")
 
-(defvar mxf-view/local-tags-plist nil
+(defvar mxf-view--local-tags-plist nil
   "Plist of (tag1 ul1 tag2 ul2 ...) made from local tags.")
 
-(defvar mxf-view/data nil
+(defvar mxf-view--data nil
   "Contain parsed MXF data.")
 
 ;; ============================================================
@@ -175,7 +179,7 @@
 (defconst mxf-view-random-index-pack-spec
   '(:random-index-pack
     "060e2b34020501010d01020101110100"
-    (:partition-index mxf-view-pindex-spec until mxf-view/pindex-length)
+    (:partition-index mxf-view-pindex-spec until mxf-view--pindex-length)
     (:rip-len u32)))
 
 (defconst mxf-view-partition-pack-spec
@@ -536,8 +540,8 @@
     (:key-frame-offset u8)
     (:flags u8)
     (:stream-offset u64)
-    (:slice-offset u32 array mxf-view/index-slice-count)
-    (:pos-table rat array mxf-view/index-pos-table-count)))
+    (:slice-offset u32 array mxf-view--index-slice-count)
+    (:pos-table rat array mxf-view--index-pos-table-count)))
 
 (defconst mxf-view-index-table-spec
   '(:index-table
@@ -549,8 +553,8 @@
     (#x3f05 :edit-unit-byte-count u32)
     (#x3f06 :index-sid u32)
     (#x3f07 :body-sid u32)
-    (#x3f08 :slice-count u8 mxf-view/index-slice-count)
-    (#x3f0e :pos-table-count u8 mxf-view/index-pos-table-count)
+    (#x3f08 :slice-count u8 mxf-view--index-slice-count)
+    (#x3f0e :pos-table-count u8 mxf-view--index-pos-table-count)
     (#x3f09 :delta-entry-array batch mxf-view-delta-entry-spec)
     (#x3f0a :index-entry-array batch mxf-view-index-entry-spec)))
 
@@ -874,7 +878,7 @@ COUNT should be an integer or a symbol bound to an integer."
             :end ,(+ (point) (cdr kl) -1))
      . (lambda ()
          (mxf-view-warning-str
-          (format-message "Omitted. Type `e' to extract essence."))))))
+          (format-message "Omitted. (`x': hexlify essence, `e': extract essence)"))))))
 
 (defun mxf-view-make-group (offset tag data)
   "Make a group of klvs with OFFSET, TAG and DATA."
@@ -909,7 +913,7 @@ COUNT should be an integer or a symbol bound to an integer."
 (defun mxf-view-tag-or-ul (tag)
   "If TAG is for descriptive metadata, find ul from primer pack."
   (if (< tag #x8000) tag
-    (plist-get mxf-view/local-tags-plist tag)))
+    (plist-get mxf-view--local-tags-plist tag)))
 
 (defun mxf-view-read-set (spec set-length)
   "Read a header metadata of SPEC with max length SET-LENGTH."
@@ -928,7 +932,7 @@ COUNT should be an integer or a symbol bound to an integer."
     (nreverse result)))
 
 (defun mxf-view-read-primer-pack (pos)
-  "Read primer pack from POS then build mxf-view/local-tags-plist."
+  "Read primer pack from POS then build mxf-view--local-tags-plist."
   (goto-char pos)
   (let ((ppack (mxf-view-read-pack mxf-view-primer-pack-spec))
         plist)
@@ -939,7 +943,7 @@ COUNT should be an integer or a symbol bound to an integer."
            ((:ul ,_ ,_ ) . ,ul))
          (push (mxf-view-hex ul) plist)
          (push tag plist))))
-    (setq-local mxf-view/local-tags-plist plist)
+    (setq-local mxf-view--local-tags-plist plist)
     ppack))
 
 (defun mxf-view-read-metadata ()
@@ -1044,7 +1048,7 @@ COUNT should be an integer or a symbol bound to an integer."
     (len
      (goto-char (- (point-max) len))
      (save-excursion
-       (setq-local mxf-view/pindex-length (- (cdr (mxf-view-read-kl)) 4)))
+       (setq-local mxf-view--pindex-length (- (cdr (mxf-view-read-kl)) 4)))
      (pcase (mxf-view-read-pack mxf-view-random-index-pack-spec)
        ((pred stringp) nil)
        (rip
@@ -1123,18 +1127,19 @@ COUNT should be an integer or a symbol bound to an integer."
                          (:value . ,value)
                          (:parent . ,parent)
                          (:depth . ,depth)
-                         (:children-beg . nil)
-                         (:children-end . nil)
+                         (:children-beg . ,item-end)
+                         (:children-end . ,item-end)
                          ,(cons :closed nil)))))
 
 ;; ============================================================
 ;; widget accessor
 ;; ============================================================
 
-(defmacro define-mxf-view-accessor (sym)
+(defmacro mxf-view-define-widget-accessor (sym)
   "Define widget accessor of SYM."
-  (let ((getter (intern (format "mxf-view%s" sym)))
-        (setter (intern (format "mxf-view-set%s" sym))))
+  (let* ((symstr (substring (symbol-name sym) 1))
+         (getter (intern (format "mxf-view-getw-%s" symstr)))
+         (setter (intern (format "mxf-view-setw-%s" symstr))))
     `(progn
        (defun ,getter (widget)
          ,(format "Return %s of WIDGET." sym)
@@ -1145,39 +1150,39 @@ COUNT should be an integer or a symbol bound to an integer."
          ,(format "Set %s of WIDGET to VAL." sym)
          (setf (alist-get ,sym widget) val)))))
 
-(define-mxf-view-accessor :type)
-(define-mxf-view-accessor :value)
-(define-mxf-view-accessor :parent)
-(define-mxf-view-accessor :depth)
-(define-mxf-view-accessor :children-beg)
-(define-mxf-view-accessor :children-end)
-(define-mxf-view-accessor :closed)
+(mxf-view-define-widget-accessor :type)
+(mxf-view-define-widget-accessor :value)
+(mxf-view-define-widget-accessor :parent)
+(mxf-view-define-widget-accessor :depth)
+(mxf-view-define-widget-accessor :children-beg)
+(mxf-view-define-widget-accessor :children-end)
+(mxf-view-define-widget-accessor :closed)
 
-(defun mxf-view:node-p (widget)
+(defun mxf-view-isw-node-p (widget)
   "Return t if WIDGET is of node."
-  (eq (mxf-view:type widget) 'mxf-view-node))
+  (eq (mxf-view-getw-type widget) 'mxf-view-node))
 
-(defun mxf-view:label (widget)
+(defun mxf-view-getw-label (widget)
   "Return label of WIDGET value."
-  (caar (mxf-view:value widget)))
+  (caar (mxf-view-getw-value widget)))
 
-(defun mxf-view:data (widget)
+(defun mxf-view-getw-data (widget)
   "Return data of WIDGET value."
-  (cdar (mxf-view:value widget)))
+  (cdar (mxf-view-getw-value widget)))
 
-(defun mxf-view-set:visibility (widget flag)
+(defun mxf-view-setw-visibility (widget flag)
   "Set WIDGET visibility to FLAG."
-  (let ((beg (mxf-view:children-beg widget))
-        (end (mxf-view:children-end widget)))
+  (let ((beg (mxf-view-getw-children-beg widget))
+        (end (mxf-view-getw-children-end widget)))
     (put-text-property beg end 'invisible (not flag))))
 
-(defun mxf-view-set:icon (widget icon)
+(defun mxf-view-setw-icon (widget icon)
   "Set WIDGET icon ICON."
   (let ((pos (point))
         (icon-regexp (format "\\(%s\\|%s\\)"
                              (regexp-quote mxf-view-open-icon)
                              (regexp-quote mxf-view-close-icon))))
-    (goto-char (1- (mxf-view:children-beg widget)))
+    (goto-char (1- (mxf-view-getw-children-beg widget)))
     (beginning-of-line)
     (when (re-search-forward icon-regexp)
       (insert-and-inherit icon)
@@ -1186,17 +1191,17 @@ COUNT should be an integer or a symbol bound to an integer."
     ;; `save-excursion' does not restore position...
     (goto-char pos)))
 
-(defun mxf-view-set:status (widget open-flag)
+(defun mxf-view-setw-status (widget open-flag)
   "Set icon and status of WIDGET to OPEN-FLAG."
-  (mxf-view-set:icon widget (if open-flag mxf-view-open-icon
+  (mxf-view-setw-icon widget (if open-flag mxf-view-open-icon
                               mxf-view-close-icon))
-  (mxf-view-set:closed widget (not open-flag)))
+  (mxf-view-setw-closed widget (not open-flag)))
 
-(defun mxf-view:partition-name (point)
+(defun mxf-view-getw-partition-name (point)
   "Get partition name from POINT."
   (alist-get :name (get-text-property point 'mxf-view-partition)))
 
-(defun mxf-view:partition-range (point)
+(defun mxf-view-getw-partition-range (point)
   "Get partition range from POINT."
   (alist-get :range (get-text-property point 'mxf-view-partition)))
 
@@ -1236,8 +1241,8 @@ COUNT should be an integer or a symbol bound to an integer."
         (pos (make-symbol "--pos--"))
         (beg (make-symbol "--beg--"))
         (end (make-symbol "--end--")))
-    `(let ((,beg (mxf-view:children-beg ,widget))
-           (,end (mxf-view:children-end ,widget)))
+    `(let ((,beg (mxf-view-getw-children-beg ,widget))
+           (,end (mxf-view-getw-children-end ,widget)))
        (while (< ,beg ,end)
          (let* ((,var (get-text-property ,beg 'mxf-view-item))
                 (,pos (or (text-property-not-all ,beg ,end 'mxf-view-item ,var)
@@ -1251,13 +1256,13 @@ COUNT should be an integer or a symbol bound to an integer."
     (beginning-of-line)
     (if (search-forward ":" nil 'no-error)
         (backward-char))
-    (mxf-view:depth w)))
+    (mxf-view-getw-depth w)))
 
 (defun mxf-view-goto-parent ()
   "Move cursor to parent item of this item."
   (interactive)
   (mxf-view-with-widget (w)
-    (goto-char (mxf-view:parent w))
+    (goto-char (mxf-view-getw-parent w))
     (mxf-view-adjust-cursor-pos)))
 
 (defun mxf-view-next-widget-internal (&optional arg)
@@ -1289,7 +1294,7 @@ COUNT should be an integer or a symbol bound to an integer."
   (mxf-view-with-rollback
     (mxf-view-with-widget (w)
       (catch 'found
-        (let ((this-depth (mxf-view:depth w)))
+        (let ((this-depth (mxf-view-getw-depth w)))
           (while t
             (let ((next-depth (mxf-view-next-widget-internal arg)))
               (cond ((= next-depth this-depth)
@@ -1306,31 +1311,31 @@ COUNT should be an integer or a symbol bound to an integer."
   "Toggle WIDGET."
   (interactive
    (list (mxf-view-widget-at)))
-  (or (mxf-view:node-p widget)
+  (or (mxf-view-isw-node-p widget)
       (user-error "Can't toggle leaf item"))
   (let ((inhibit-read-only t)
-        (open (mxf-view:closed widget)))
-    (mxf-view-set:visibility widget open)
-    (mxf-view-set:status widget open)
+        (open (mxf-view-getw-closed widget)))
+    (mxf-view-setw-visibility widget open)
+    (mxf-view-setw-status widget open)
     (when open
       (mxf-view-with-each-children (child widget)
-        (if (mxf-view:closed child)
-            (mxf-view-set:visibility child nil))))
+        (if (mxf-view-getw-closed child)
+            (mxf-view-setw-visibility child nil))))
     (set-buffer-modified-p nil)))
 
 (defun mxf-view-toggle-all-widget (widget)
   "Toggle WIDGET and her children."
   (interactive
    (list (mxf-view-widget-at)))
-  (or (mxf-view:node-p widget)
+  (or (mxf-view-isw-node-p widget)
       (user-error "Can't toggle leaf item"))
   (let ((inhibit-read-only t)
-        (open (mxf-view:closed widget)))
-    (mxf-view-set:visibility widget open)
-    (mxf-view-set:status widget open)
+        (open (mxf-view-getw-closed widget)))
+    (mxf-view-setw-visibility widget open)
+    (mxf-view-setw-status widget open)
     (mxf-view-with-each-children (child widget)
-      (and (mxf-view:node-p child)
-           (mxf-view-set:status child open))))
+      (and (mxf-view-isw-node-p child)
+           (mxf-view-setw-status child open))))
   (set-buffer-modified-p nil))
 
 (defun mxf-view-collapse-all ()
@@ -1340,17 +1345,17 @@ COUNT should be an integer or a symbol bound to an integer."
     (while (not (eobp))
       (mxf-view-with-widget (w)
         (call-interactively 'mxf-view-toggle-all-widget)
-        (goto-char (1+ (mxf-view:children-end w))))))
+        (goto-char (1+ (mxf-view-getw-children-end w))))))
   (mxf-view-adjust-cursor-pos))
 
 (defun mxf-view-extract-essence (widget)
   "Extract essence of WIDGET to file."
   (interactive
    (list (mxf-view-widget-at)))
-  (or (eq (mxf-view:label widget) :data)
+  (or (eq (mxf-view-getw-label widget) :data)
       (user-error "No essence under cursor"))
   (let ((mxf-view-file buffer-file-name)
-        (data (mxf-view:data widget))
+        (data (mxf-view-getw-data widget))
         (file (read-file-name "Extract essence to: ")))
     (and (string-blank-p file)
          (user-error "Canceled"))
@@ -1365,13 +1370,36 @@ COUNT should be an integer or a symbol bound to an integer."
                                       (plist-get data :end)))
     (message "Essence exported to %s" file)))
 
+(defun mxf-view-hexlify-essence (widget)
+  "Hexlify essence of WIDGET."
+  (interactive
+   (list (mxf-view-widget-at)))
+  (or (eq (mxf-view-getw-label widget) :data)
+      (user-error "No essence under cursor"))
+  (let ((buffer (get-buffer-create "MXF-View-Essence"))
+        (mxf-view-file buffer-file-name)
+        (data (mxf-view-getw-data widget))
+        (pos (mxf-view-getw-children-beg widget))
+        (inhibit-read-only t))
+    (with-current-buffer buffer
+      (erase-buffer)
+      (set-buffer-multibyte nil)
+      (set-buffer-file-coding-system 'binary)
+      (insert-file-contents-literally mxf-view-file nil
+                                      (plist-get data :beg)
+                                      (plist-get data :end))
+      (setq buffer-undo-list nil)
+      (hexlify-buffer)
+      (set-buffer-modified-p nil)
+    (view-buffer-other-window buffer))))
+
 (defun mxf-view-open-parent (widget)
   "Open parent of WIDGET until root."
-  (let ((parent (mxf-view:parent widget)))
+  (let ((parent (mxf-view-getw-parent widget)))
     (when (< 0 parent)
       (goto-char parent)
       (mxf-view-with-widget (w)
-        (if (mxf-view:closed w)
+        (if (mxf-view-getw-closed w)
             (call-interactively 'mxf-view-toggle-widget))
         (mxf-view-open-parent w)))))
 
@@ -1381,7 +1409,7 @@ COUNT should be an integer or a symbol bound to an integer."
     (goto-char (or pos (point)))
     (save-excursion
       (mxf-view-with-widget (w)
-        (if (mxf-view:closed w)
+        (if (mxf-view-getw-closed w)
             (call-interactively 'mxf-view-toggle-all-widget))
         (mxf-view-open-parent w)))
     (mxf-view-adjust-cursor-pos))
@@ -1421,7 +1449,7 @@ COUNT should be an integer or a symbol bound to an integer."
           (while (re-search-forward exp nil t)
             (let ((name (match-string-no-properties pos))
                   (idx (match-beginning pos)))
-              (push (list (mxf-view:partition-name idx)
+              (push (list (mxf-view-getw-partition-name idx)
                           (cons (format "(%s) %s" group name) idx))
                     result))))))
     ;; stable sort
@@ -1478,7 +1506,7 @@ COUNT should be an integer or a symbol bound to an integer."
   (let ((ref (overlay-get button 'uuid))
         (start (overlay-start button))
         (end (overlay-end button))
-        (range (mxf-view:partition-range (point)))
+        (range (mxf-view-getw-partition-range (point)))
         list)
     (save-excursion
       (goto-char (car range))
@@ -1508,8 +1536,8 @@ COUNT should be an integer or a symbol bound to an integer."
            (let ((candidates
                   (mapcar (lambda (pos)
                             (cons (format "%s/%s"
-                                          (mxf-view:label (mxf-view:parent pos))
-                                          (mxf-view:label pos))
+                                          (mxf-view-getw-label (mxf-view-getw-parent pos))
+                                          (mxf-view-getw-label pos))
                                   pos))
                           (nreverse list))))
              (pcase (completing-read "Select location: " candidates nil t)
@@ -1611,7 +1639,7 @@ COUNT should be an integer or a symbol bound to an integer."
 (defun mxf-view-setup (parsed-data)
   "Setup buffer with PARSED-DATA."
   (let ((inhibit-read-only t))
-    (setq-local mxf-view/data parsed-data) ; currently for debug purposes only
+    (setq-local mxf-view--data parsed-data) ; currently for debug purposes only
     (erase-buffer)
     (set-buffer-multibyte t)
     (mxf-view-render parsed-data)
