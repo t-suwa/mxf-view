@@ -932,7 +932,7 @@ COUNT should be an integer or a symbol bound to an integer."
     (nreverse result)))
 
 (defun mxf-view-read-primer-pack (pos)
-  "Read primer pack from POS then build mxf-view--local-tags-plist."
+  "Read primer pack from POS then build `mxf-view--local-tags-plist'."
   (goto-char pos)
   (let ((ppack (mxf-view-read-pack mxf-view-primer-pack-spec))
         plist)
