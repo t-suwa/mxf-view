@@ -18,7 +18,7 @@ Features:
 - No validation
 - No hooks
 
-* Screenshot
+* Screenshots
 
   - View MXF structure
   [[images/mxf-view.png]]
@@ -26,7 +26,10 @@ Features:
   - Move around with imenu
   [[images/imenu.png]]
 
-* Install
+  - Hexlify essence
+  [[images/hexlify.png]]
+
+* Installation
 
   Put mxf-view.el in your load-path, then add following code to your init files.
 
