@@ -1,4 +1,4 @@
-;;; mxf-view.el --- Simple MXF viewer -*- lexical-binding: t -*-
+;;; mxf-view.el --- Simple MXF viewer -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2018 Tomotaka SUWA
 
@@ -45,7 +45,7 @@
 
 (defgroup mxf-view nil
   "MXF file viewer."
-  :version "0.1"
+  :version "0.2"
   :group 'utility)
 
 (defcustom mxf-view-leaf-icon "   "
