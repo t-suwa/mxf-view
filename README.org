@@ -1,3 +1,5 @@
+[![MELPA](http://melpa.org/packages/mxf-view.svg)](http://melpa.org/#/mxf-view)
+
 * What's this?
 
 An Emacs package for viewing [[https://en.wikipedia.org/wiki/Material_Exchange_Format][MXF]] files.
@@ -31,7 +33,27 @@ Features:
 
 * Installation
 
-  Put mxf-view.el in your load-path, then add following code to your init files.
+** Install from MELPA
+
+   : M-x package-install RET mxf-view RET
+
+   After installation, put following code to your init file.
+
+   #+BEGIN_SRC emacs-lisp
+   (require 'mxf-view)
+   #+END_SRC
+
+   Or, if you fond of `use-pacakge':
+
+   #+BEGIN_SRC emacs-lisp
+   (use-package mxf-view)
+   #+END_SRC
+
+   Then you can open MXF files directly and navigate physical structure at ease.
+
+** Install manually
+
+  Put mxf-view.el in your load-path, then add following code to your init file.
 
   #+BEGIN_SRC emacs-lisp
   (require 'mxf-view)
