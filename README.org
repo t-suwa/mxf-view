@@ -1,4 +1,4 @@
-[![MELPA](http://melpa.org/packages/mxf-view.svg)](http://melpa.org/#/mxf-view)
+[[https://melpa.org/#/mxf-view][file:https://melpa.org/packages/mxf-view-badge.svg]]
 
 * What's this?
 
