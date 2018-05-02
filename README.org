@@ -1,101 +1,104 @@
+
+* mxf-view
+
 [[https://melpa.org/#/mxf-view][file:https://melpa.org/packages/mxf-view-badge.svg]]
 
-* What's this?
+** What's this?
 
-An Emacs package for viewing [[https://en.wikipedia.org/wiki/Material_Exchange_Format][MXF]] files.
+   An Emacs package for viewing [[https://en.wikipedia.org/wiki/Material_Exchange_Format][MXF]] files.
 
-Features:
+   Features:
 
-- Provide a view of MXF physical structure
-- Create links between instance references
-- Open/collapse widget easily
-- Hexlify indivisual essence 
-- Extract individual essence to file
-- Support for imenu and font lock
-- Revert buffer
+   - Provide a view of MXF physical structure
+   - Create links between instance references
+   - Open/collapse widget easily
+   - Hexlify indivisual essence 
+   - Extract individual essence to file
+   - Support for imenu and font lock
+   - Revert buffer
 
-* Limitations
+** Limitations
 
-- No metadata for local tags
-- No validation
-- No hooks
+   - No metadata for local tags
+   - No validation
+   - No hooks
 
-* Screenshots
+** Screenshots
 
-  - View MXF structure
-  [[images/mxf-view.png]]
+   - View MXF structure
+   [[images/mxf-view.png]]
 
-  - Move around with imenu
-  [[images/imenu.png]]
+   - Move around with imenu
+   [[images/imenu.png]]
 
-  - Hexlify essence
-  [[images/hexlify.png]]
+   - Hexlify essence
+   [[images/hexlify.png]]
 
-* Installation
+** Installation
 
-** Install from MELPA
+*** Install from MELPA
 
-   : M-x package-install RET mxf-view RET
+    : M-x package-install RET mxf-view RET
 
-   After installation, put following code to your init file.
+    After installation, put following code to your init file.
 
-   #+BEGIN_SRC emacs-lisp
+    #+BEGIN_SRC emacs-lisp
+    (require 'mxf-view)
+    #+END_SRC
+
+    Or, if you fond of `use-pacakge':
+
+    #+BEGIN_SRC emacs-lisp
+    (use-package mxf-view)
+    #+END_SRC
+
+    Then you can open MXF files directly and navigate physical structure at ease.
+
+*** Install manually
+
+    Put mxf-view.el in your load-path, then add following code to your init file.
+
+    #+BEGIN_SRC emacs-lisp
    (require 'mxf-view)
-   #+END_SRC
+    #+END_SRC
 
-   Or, if you fond of `use-pacakge':
+    This updates `auto-mode-alist' and opening a MXF file enables
+    *mxf-view-mode* automatically.
 
-   #+BEGIN_SRC emacs-lisp
-   (use-package mxf-view)
-   #+END_SRC
+    If you would like to manage mxf-view as a package, try this:
 
-   Then you can open MXF files directly and navigate physical structure at ease.
+    : M-x package-install-file RET mxf-view.el RET
 
-** Install manually
+** Key bindings
 
-  Put mxf-view.el in your load-path, then add following code to your init file.
-
-  #+BEGIN_SRC emacs-lisp
-  (require 'mxf-view)
-  #+END_SRC
-
-  This updates `auto-mode-alist' and opening a MXF file enables
-  *mxf-view-mode* automatically.
-
-  If you would like to manage mxf-view as a package, try this:
-
-  : M-x package-install-file RET mxf-view.el RET
-
-* Key bindings
-
-|-----------+---------------------------------|
-| key       | function                        |
-|-----------+---------------------------------|
-| SPC       | scroll up                       |
-|-----------+---------------------------------|
-| DEL       | scroll down                     |
-|-----------+---------------------------------|
-| j,n       | move to next widget             |
-|-----------+---------------------------------|
-| k,p       | move to prior widget            |
-|-----------+---------------------------------|
-| M-n       | move to next sibling widget     |
-|-----------+---------------------------------|
-| M-p       | move to previous sibling widget |
-|-----------+---------------------------------|
-| h,u       | move to parent widget           |
-|-----------+---------------------------------|
-| c,TAB,RET | toggle single widget            |
-|-----------+---------------------------------|
-| /,*       | toggle widget recursively       |
-|-----------+---------------------------------|
-| x         | hexlify essence                 |
-|-----------+---------------------------------|
-| e         | extract essence to file         |
-|-----------+---------------------------------|
-| g         | revert buffer                   |
-|-----------+---------------------------------|
-| z         | suspend                         |
-|-----------+---------------------------------|
-| q         | quit                            |
-|-----------+---------------------------------|
+   |-----------+---------------------------------|
+   | key       | function                        |
+   |-----------+---------------------------------|
+   | SPC       | scroll up                       |
+   |-----------+---------------------------------|
+   | DEL       | scroll down                     |
+   |-----------+---------------------------------|
+   | j,n       | move to next widget             |
+   |-----------+---------------------------------|
+   | k,p       | move to prior widget            |
+   |-----------+---------------------------------|
+   | M-n       | move to next sibling widget     |
+   |-----------+---------------------------------|
+   | M-p       | move to previous sibling widget |
+   |-----------+---------------------------------|
+   | h,u       | move to parent widget           |
+   |-----------+---------------------------------|
+   | c,TAB,RET | toggle single widget            |
+   |-----------+---------------------------------|
+   | /,*       | toggle widget recursively       |
+   |-----------+---------------------------------|
+   | x         | hexlify essence                 |
+   |-----------+---------------------------------|
+   | e         | extract essence to file         |
+   |-----------+---------------------------------|
+   | g         | revert buffer                   |
+   |-----------+---------------------------------|
+   | z         | suspend                         |
+   |-----------+---------------------------------|
+   | q         | quit                            |
+   |-----------+---------------------------------|
