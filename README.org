@@ -1,13 +1,11 @@
 
-* mxf-view
-
 [[https://melpa.org/#/mxf-view][file:https://melpa.org/packages/mxf-view-badge.svg]]
 
-** What's this?
+* mxf-view
 
-   An Emacs package for viewing [[https://en.wikipedia.org/wiki/Material_Exchange_Format][MXF]] files.
+An easy to use  [[https://en.wikipedia.org/wiki/Material_Exchange_Format][MXF]] file viewer for Emacs. Display physical structure of MXF in neat.
 
-   Features:
+** Features
 
    - Provide a view of MXF physical structure
    - Create links between instance references
