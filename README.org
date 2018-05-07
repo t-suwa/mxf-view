@@ -5,6 +5,8 @@
 
 An easy to use  [[https://en.wikipedia.org/wiki/Material_Exchange_Format][MXF]] file viewer for Emacs. Display physical structure of MXF in neat.
 
+[[file:images/screencast.gif]]
+
 ** Features
 
    - Provide a view of MXF physical structure
