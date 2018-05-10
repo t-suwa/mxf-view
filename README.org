@@ -46,7 +46,7 @@ An easy to use  [[https://en.wikipedia.org/wiki/Material_Exchange_Format][MXF]] 
     (require 'mxf-view)
     #+END_SRC
 
-    Or, if you fond of `use-pacakge':
+    Or, if you're fond of `use-pacakge':
 
     #+BEGIN_SRC emacs-lisp
     (use-package mxf-view)
@@ -59,7 +59,7 @@ An easy to use  [[https://en.wikipedia.org/wiki/Material_Exchange_Format][MXF]] 
     Put mxf-view.el in your load-path, then add following code to your init file.
 
     #+BEGIN_SRC emacs-lisp
-   (require 'mxf-view)
+    (require 'mxf-view)
     #+END_SRC
 
     This updates `auto-mode-alist' and opening a MXF file enables
